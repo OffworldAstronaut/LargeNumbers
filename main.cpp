@@ -46,8 +46,9 @@ class probDist {
             }
         }
     public:
-        int interval[2];            // interval for the distribution
-        string type = "uniform";    // type of distribution (default is uniform)
+        double interval[2];             // interval for the distribution
+        string type = "uniform";        // type of distribution (default is uniform)
+        int numValues = 1000;           // number of random values to generate (default is 1000)
 
         // Parameters for different distributions
 
@@ -59,10 +60,12 @@ class probDist {
          * @brief Default constructor for a probability distribution -- uniform distribution
          * 
          * @param interval (Integer) interval that the distribution will cover
+         * @param numValues (Integer) number of random values to generate
          */
-        probDist(int interval[2]) {
+        probDist(double interval[2], int numValues = 1000) {
             this->interval[0] = interval[0],
             this->interval[1] = interval[1];
+            this->numValues = numValues;
         }
 
         /**
@@ -70,12 +73,14 @@ class probDist {
          * 
          * @param interval (Integer) interval that the distribution will cover
          * @param lambda The distribution's lambda parameter
+         * @param numValues (Integer) number of random values to generate
          */
-        probDist(int interval[2], double lambda) {
+        probDist(double interval[2], double lambda, int numValues = 1000) {
             this->interval[0] = interval[0],
             this->interval[1] = interval[1];
             this->lambda = lambda;
             this->type = "poisson";
+            this->numValues = numValues;
         }
 
         /**
@@ -84,20 +89,38 @@ class probDist {
          * @param interval (Integer) interval that the distribution will cover
          * @param mean The distribution's mean (mu)
          * @param sigma The distribution's standard deviation (sigma)
+         * @param numValues (Integer) number of random values to generate
          */
-        probDist(int interval[2], double mean, double sigma) {
+        probDist(double interval[2], double mean, double sigma, int numValues = 1000) {
             this->interval[0] = interval[0],
             this->interval[1] = interval[1];
             this->mean = mean;
             this->sigma = sigma;
             this->type = "normal";
+            this->numValues = numValues;
         }
 
         void genValues()
         {
-            // opens the file for writing
-            ofstream file("random_values.dat");
+            // creates the file name
+            string fileName;
 
+            // checks the type of distribution and sets the file name accordingly
+            if (this->type == "poisson")
+            {
+                fileName = format("poisson_lambda_{:.2f}.dat", this->lambda);
+            }
+            else if (this->type == "normal")
+            {
+                fileName = format("normal_mean_{:.2f}_sigma_{:.2f}.dat", this->mean, this->sigma);
+            }
+            else
+            {
+                fileName = format("uniform_min_{:.2f}_max_{:.2f}.dat", this->interval[0], this->interval[1]);
+            }
+
+            // opens the file for writing
+            ofstream file(fileName);
             // creates an interface for random number generation
             random_device rd; 
             // seed the mersenne twister generator
@@ -108,7 +131,6 @@ class probDist {
             {
                 // creates a poisson distribution generator
                 poisson_distribution<> dis(lambda); // poisson distribution
-                int numValues = 1000; // number of random values to generate
                 for (int i = 0; i < numValues; ++i)
                 {
                     int value = dis(gen); // generate random value
@@ -119,7 +141,6 @@ class probDist {
             {
                 // creates a normal distribution generator
                 normal_distribution<> dis(mean, sigma); // normal distribution
-                int numValues = 1000; // number of random values to generate
                 for (int i = 0; i < numValues; ++i)
                 {
                     int value = dis(gen); // generate random value
@@ -129,7 +150,6 @@ class probDist {
             else
             {
                 uniform_int_distribution<> dis(interval[0], interval[1]); // uniform distribution
-                int numValues = 1000; // number of random values to generate
                 for (int i = 0; i < numValues; ++i)
                 {
                     int value = dis(gen); // generate random value
@@ -137,7 +157,7 @@ class probDist {
                 }
             }
             // write the expected value to the file and close the file
-            file << format("Expected value: {:.2f}", returnAvg()); // write expected value to file
+            file << returnAvg(); // write expected value to file
             file.close();
         }
 };
@@ -147,12 +167,47 @@ class probDist {
  * 
  * @return int Exit status of the program
  */
-int main() {
+int main(int argc, char *argv[]) {
     // define the interval for the distribution
-    int interval[2] = {0, 100};
-    // create a probability distribution object
-    probDist dist(interval);
-    // generate random values based on the distribution
-    dist.genValues();
-    return 0;
+    double interval[2] = {atof(argv[1]), atof(argv[2])};
+
+    // checks the number of arguments -- the code will only work with the correct number
+    if (argc < 4 || argc > 6)
+    {
+        cerr << "Usage: " << argv[0] << " <min> <max> <n_samples> <lambda/mu> <sigma>" << endl;
+        return 1;
+    }
+    else
+    {
+        // conditions for distribution-type selection
+
+        // if there's five arguments, it'll be generated a poisson
+        if (argc == 5)
+        {
+            // Poisson distribution
+            double lambda = atof(argv[3]);
+            int numValues = atoi(argv[4]);
+            probDist poissonDist(interval, numValues, lambda);
+            poissonDist.genValues();
+        }
+        // if there's six instead, a normal will be created
+        else if (argc == 6)
+        {
+            // Normal distribution
+            double mean = atof(argv[3]);
+            double sigma = atof(argv[4]);
+            int numValues = atoi(argv[5]);
+            probDist normalDist(interval, numValues, mean, sigma);
+            normalDist.genValues();
+        }
+        // the default case, a uniform distribution
+        else
+        {
+            // create a probability distribution object
+            int numValues = atoi(argv[3]);
+            probDist distribution(interval, numValues);
+            // uniform distribution
+            distribution.genValues();
+        } 
+    }
 }
