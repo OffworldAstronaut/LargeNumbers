@@ -4,7 +4,7 @@
  * @brief C++ program to aid in the demonstration of the Law of Large Numbers
  * @details This program is designed to illustrate the Law of Large Numbers by simulating a series
  *          of random events and calculating the average of the results. The program will generate
- *          a specified number of random integers, compute their average and store in a file.
+ *          a specified number of random numbers, compute their average and store in a file.
  * @version 0.1
  * @date 2025-07-05
  * 
@@ -95,8 +95,64 @@ class probDist {
 
         void genValues()
         {
-            // TODO: Implement the function to generate random values based on the distribution type
-            // the function will generate a specified number of random integers and write to a .dat file
-            // for further analysis
+            // opens the file for writing
+            ofstream file("random_values.dat");
+
+            // creates an interface for random number generation
+            random_device rd; 
+            // seed the mersenne twister generator
+            mt19937 gen(rd());
+
+            // check the type of distribution and generate values accordingly
+            if (this->type == "poisson")
+            {
+                // creates a poisson distribution generator
+                poisson_distribution<> dis(lambda); // poisson distribution
+                int numValues = 1000; // number of random values to generate
+                for (int i = 0; i < numValues; ++i)
+                {
+                    int value = dis(gen); // generate random value
+                    file << value << endl; // write to file
+                }
+            }
+            else if (this->type == "normal")
+            {
+                // creates a normal distribution generator
+                normal_distribution<> dis(mean, sigma); // normal distribution
+                int numValues = 1000; // number of random values to generate
+                for (int i = 0; i < numValues; ++i)
+                {
+                    int value = dis(gen); // generate random value
+                    file << value << endl; // write to file
+                }
+            }
+            else
+            {
+                uniform_int_distribution<> dis(interval[0], interval[1]); // uniform distribution
+                int numValues = 1000; // number of random values to generate
+                for (int i = 0; i < numValues; ++i)
+                {
+                    int value = dis(gen); // generate random value
+                    file << value << endl; // write to file
+                }
+            }
+            // write the expected value to the file and close the file
+            file << format("Expected value: {:.2f}", returnAvg()); // write expected value to file
+            file.close();
         }
 };
+
+/**
+ * @brief Main function to demonstrate the Law of Large Numbers
+ * 
+ * @return int Exit status of the program
+ */
+int main() {
+    // define the interval for the distribution
+    int interval[2] = {0, 100};
+    // create a probability distribution object
+    probDist dist(interval);
+    // generate random values based on the distribution
+    dist.genValues();
+    return 0;
+}
