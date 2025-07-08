@@ -50,3 +50,6 @@ build/
 cmake-build-*/
 Debug/
 Release/
+
+# Python
+.venv

@@ -6,7 +6,9 @@
 g++ main.cpp -o main -std=c++20
 
 if [[ "$#" -lt 4 || "$#" -gt 6 ]]; then
-    echo "Usage: $0 <min> <max> <n_samples> <lambda/mu> <sigma>"
+    echo "Usage: $0 <min> <max> <n_samples>                 (uniform distribution)"
+    echo "Usage: $0 <min> <max> <lambda> <n_samples>        (poisson distribution)"
+    echo "Usage: $0 <min> <max> <mu> <sigma> <n_samples>    (normal distribution)"
     exit 1
 fi
 
